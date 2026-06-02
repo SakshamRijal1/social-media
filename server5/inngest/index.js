@@ -13,7 +13,7 @@ const syncUserCreation=inngest.createFunction(
       }
     ]
   },
-  async((event)=>{
+  async({event})=>{
     const {id,email_addresses,first_name,last_name,image_url}=event.data;
     let username=email_addresses[0].email_address.split('@')[0];
   const existingUser=await User.findOne({
@@ -33,7 +33,7 @@ const syncUserCreation=inngest.createFunction(
     }
     await User.create(userCreated)
   })
-)
+
 const syncUserUpdation=inngest.createFunction(
   {
     id:"sync-user-updation",
@@ -43,7 +43,7 @@ const syncUserUpdation=inngest.createFunction(
       }
     ]
   },
-  async((event)=>{
+  async({event})=>{
     const {id,email_addresses,first_name,last_name,image_url}=event.data;
 
     const userUpdated={
@@ -55,7 +55,7 @@ const syncUserUpdation=inngest.createFunction(
     }
 await User.findByIdAndUpdate(id,userUpdated);
   })
-)
+
 const syncUserDeletion=inngest.createFunction(
   {
     id:"sync-user-deletion",
@@ -65,12 +65,12 @@ const syncUserDeletion=inngest.createFunction(
       }
     ]
   },
-  async((event)=>{
+  async({event})=>{
     const {id}=event.data;
 
 await User.findByIdAndDelete(id)
   })
-)
+
 
 
 export const functions=[syncUserCreation,syncUserUpdation,syncUserDeletion]
