@@ -16,7 +16,9 @@ const syncUserCreation=inngest.createFunction(
   async((event)=>{
     const {id,email_addresses,first_name,last_name,image_url}=event.data;
     let username=email_addresses[0].email_address.split('@')[0];
-  const existingUser=await User.findOne(username);
+  const existingUser=await User.findOne({
+    username
+  });
   if(existingUser)
   {
     username=username+Math.floor(Math.random()*1000)
@@ -71,4 +73,4 @@ await User.findByIdAndDelete(id)
 )
 
 
-export const functions=[]
+export const functions=[syncUserCreation,syncUserUpdation,syncUserDeletion]

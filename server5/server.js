@@ -12,3 +12,6 @@ app.use("/api/inngest",serve({client:inngest,functions}));
 app.get('/',(req,res)=>{
   res.send("Servre is running");
 })
+app.listen(process.env.PORT||4000,()=>{
+  console.log(`Server is running on port ${process.env.PORT||4000}`);
+})
