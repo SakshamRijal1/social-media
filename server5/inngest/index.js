@@ -34,7 +34,11 @@ existingUser=await User.findOne({
            username
 
     }
-    await User.create(userCreated)
+const existingUser=await User.findById(id);
+if(!existingUser)
+{
+  await User.create(userCreated)
+}
   })
 
 const syncUserUpdation=inngest.createFunction(
