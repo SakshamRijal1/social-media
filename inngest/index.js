@@ -257,4 +257,54 @@ return {
 }
 )
 
+
+//make a inngest function to send the email 
+
+// const sendNewConnectionReminder=inngest.createFunction({
+//   id:'send-new-connection-request',
+//   triggers:[
+//     {
+//       event:"app/connection-request"
+//     }
+//   ]
+// },async({event,step})=>{
+//   const {connectionId}=event.data;
+  
+//    await step.run('send-connection-request-mail',async()=>{
+//     const connection=await Connection.findById(connectionId).populate('from_user_id to_user_id');
+//     if(!connection) return
+//     const subject="New Connection Request"
+//     const body=""
+//     await sendEmail({
+//       subject,body,
+//       to:connection.to_user_id.email
+//     })
+//    })
+//   let in24Hours=new Date(Date.now()+24*60*60*1000);
+//  await step.sleepUntil('last-24-hours',in24Hours);
+
+//   await step.run('send-connection-request-reminder',async()=>{
+    
+//     const connection=await Connection.findById(connectionId).populate('from_user_id to_user_id');
+//      if(!connection) return
+
+//     const subject="🕐 Pending Connection Request"
+//     const body=""
+//       if(connection.status=="accepted")
+//   {
+//     return {
+//       message:"Already accepted"
+//     }
+//   }
+//   await sendEmail({
+//     to:connection.to_user_id.email,
+//     body,
+//     subject
+//   })
+
+   
+
+//   })
+// })
+
 export const functions=[syncUserCreation,syncUserUpdation,syncUserDeletion,sendNewConnectionRequestReminder]

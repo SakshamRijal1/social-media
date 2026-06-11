@@ -1,8 +1,10 @@
 
 import User from "../models/User.js";
 import fs from 'fs';
-import imageKit from "../config/imageKit.js"
+
+
 import Connection from "../models/Connection.js";
+import client from "../config/imageKit.js"
 
 export const getUserData=async(req,res)=>{
       console.log("hi")
@@ -62,7 +64,7 @@ export const updateUserData=async(req,res)=>{
    if(profile)
    {
     const buffer=fs.readFileSync(profile.path);//fs is file system module in nodejs
-    const response=await  imageKit.upload({
+    const response=await  client.files.upload({
       file:buffer,
       fileName:profile.originalNmae,
 
@@ -85,13 +87,13 @@ export const updateUserData=async(req,res)=>{
       if(cover)
    {
     const buffer=fs.readFileSync(cover.path);//fs is file system module in nodejs
-    const response=await  imageKit.upload({
+    const response=await  client.files.upload({
       file:buffer,
       fileName:cover.originalName,
 
     })
 
-    const url=imageKit.url({
+    const url=client.helper.buildSrc({
       path:response.filePath,
       transformation:[
         {
