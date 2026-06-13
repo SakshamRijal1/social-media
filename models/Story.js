@@ -11,10 +11,10 @@ content:{
   type:String,
   
 },
-media_url:[
+media_url:
   {
     type:String
-  }]
+  }
   ,
   media_type:{
     type:String,
