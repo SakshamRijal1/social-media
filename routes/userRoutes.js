@@ -5,9 +5,11 @@ import { upload } from "../config/multer.js";
 import { sendConnectionRequest } from "../controllers/userController.js";
 import { getUserConnections } from "../controllers/userController.js";
 import { acceptConnectionRequest } from "../controllers/userController.js";
+import { getUserRecentMessages } from "../controllers/messageController.js";
 const userRouter=express.Router();
 
 userRouter.get('/data',protect,getUserData);
+userRouter.get('/recent-messages',protect,getUserRecentMessages);
 
 userRouter.post('/update',protect,upload.fields([{
   name:'profile',

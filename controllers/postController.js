@@ -175,7 +175,7 @@ export const addPost=async(req,res)=>{
    const {userId}=req.auth();
    const {content,post_type}=req.body;
 
-   const images=req?.files;
+   const images=req?.file;
    
    let image_urls=[];
    if(images.length)

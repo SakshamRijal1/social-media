@@ -1,8 +1,10 @@
-import {Inngest} from "inngest";
+import {cron, Inngest, step} from "inngest";
 import User from "../models/User.js";
 import mongoose from "mongoose";
 import Connection from "../models/Connection.js";
 import sendEmail from "../config/nodemailer.js";
+import Story from "../models/Story.js";
+import Message from "../models/Message.js";
 export const inngest=new Inngest({
   id:"Sakshamedia"
 })
@@ -306,5 +308,74 @@ return {
 
 //   })
 // })
+ 
+//innngest function to delete story after 24 hours
+const deleteStory=inngest.createFunction({
+  id:"story-delete",
+  triggers:[
+    {
+      event:'app/story.delete'
+    }
+  ]
+},async({event,step})=>{
+  const {storyId}=event.data;
+  const in24Hours=new Date(Date.now()+24*60*60*1000);
+  await step.sleepUntil('wait-for-24hours',in24Hours)
+  await step.run('user-story-delete',async()=>{
+    const story=await Story.findById(storyId);
+    if(!story) {
+      return {message:"Already deleted"}
+    }
 
-export const functions=[syncUserCreation,syncUserUpdation,syncUserDeletion,sendNewConnectionRequestReminder]
+    await Story.deleteOne({
+      _id:storyId
+    })
+return {
+  message:"Story deleted successfully"
+}
+  })
+})
+
+
+const sendNotificationOnUnseenMessages=inngest.createFunction(
+  {id:'send-unseen-message-notification'
+    ,
+    triggers:[
+        {
+cron:'TZ=America/New_York 0 9 * * *'}
+    ]
+  },
+
+async({step})=>{
+  const messages=await Message.find({seen:false}).populate('to_user_id')
+  const unseenCount={};
+  messages.forEach(message=>{
+    unseenCount[message.to_user_id._id]=(unseenCount[message.to_user_id._id]||0)+1;
+  })
+  step.run('send-email',async()=>{
+  for (const userId in unseenCount) {
+
+    
+   const user=await User.findById(userId)
+   const subject=`You have ${unseenCount[userId]} unseen messages`
+   const body=`good to see you`
+      await sendEmail({
+    to:user.email,
+    subject,
+    body
+
+  })
+    
+  }
+  })
+
+
+  return {
+    message:"Notification send"
+  }
+}
+)//every day at 9 am
+
+
+
+export const functions=[syncUserCreation,syncUserUpdation,syncUserDeletion,sendNewConnectionRequestReminder,deleteStory,sendNotificationOnUnseenMessages]

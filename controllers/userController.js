@@ -5,6 +5,8 @@ import fs from 'fs';
 
 import Connection from "../models/Connection.js";
 import client from "../config/imageKit.js"
+import { inngest } from "../inngest/index.js";
+import { connect } from "mongoose";
 
 export const getUserData=async(req,res)=>{
       console.log("hi")
@@ -258,10 +260,22 @@ export const sendConnectionRequest=async(req,res)=>{
 
     if(!connection)
     {
-    await Connection.create({
+    const connection=await Connection.create({
       from_user_id:userId,
       to_user_id:id,
     })
+    await inngest.send({
+      name:"app/connection-request",
+      data:{
+      connectionId:connection._id
+      }
+    })
+     {
+      return res.json({
+        success:true,
+        message:"Send connection request successfully"
+      })
+    }
     }
     else if(connection && connection.status=="accepted")
     {

@@ -3,13 +3,14 @@ import client from "../config/imageKit.js";
 import Story from "../models/Story.js";
 import fs from "fs"
 import User from "../models/User.js";
+import { inngest } from "../inngest/index.js";
 export const addStory=async(req,res)=>{
   try{
 const {userId}=req.auth();
 const {media_type,content,background_color}=req.body;
-const media=req.files.story && req.files.story[0];
+const media=req.files;
 let url='';
-if(media_type=='video' || media_type=='image')
+if(media_type==='video' || media_type==='image')
 {
 const buffer=fs.createReadStream(media.path);
 const response=await client.files.upload({
@@ -18,12 +19,16 @@ const response=await client.files.upload({
 })
 url=response.url
 }
-await Story.create({
+const story=await Story.create({
 user:userId,
 media_type,
 media_url:url,
 content,
 background_color
+})
+await inngest.send({
+  name:'app/story.delete',
+  data:{storyId:story._id}
 })
 res.json({
   success:true,
