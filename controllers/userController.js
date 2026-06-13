@@ -63,15 +63,16 @@ export const updateUserData=async(req,res)=>{
    const cover=req.files.cover && req.files.cover[0];
    if(profile)
    {
-    const buffer=fs.readFileSync(profile.path);//fs is file system module in nodejs
+    const buffer=fs.createReadStream(profile.path);//fs is file system module in nodejs
     const response=await  client.files.upload({
       file:buffer,
-      fileName:profile.originalNmae,
+      fileName:profile.originalname,
 
     })
 
-    const url=imageKit.url({
-      path:response.filePath,
+    const url=client.helper.buildSrc({
+  urlEndpoint:process.env.IMAGEKIT_URL_ENDPOINT,
+        src:response.filePath,
       transformation:[
         {
           quatlity:"auto"},
@@ -86,15 +87,16 @@ export const updateUserData=async(req,res)=>{
    }
       if(cover)
    {
-    const buffer=fs.readFileSync(cover.path);//fs is file system module in nodejs
+    const buffer=fs.createReadStream(cover.path);//fs is file system module in nodejs
     const response=await  client.files.upload({
       file:buffer,
-      fileName:cover.originalName,
+      fileName:cover.originalname,
 
     })
 
     const url=client.helper.buildSrc({
-      path:response.filePath,
+  urlEndpoint:process.env.IMAGEKIT_URL_ENDPOINT,
+        src:response.filePath,
       transformation:[
         {
           quality:"auto"},
