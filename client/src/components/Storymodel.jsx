@@ -1,27 +1,184 @@
+import { getToken, useAuth } from '@clerk/react';
 import { ArrowBigLeft, ArrowLeft, Star, StarIcon, StarsIcon, Text, Upload } from 'lucide-react'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast';
-const Storymodel = ({setShowModal,fetchStories}) => {
+import api from '../api/axois';
+import { useNavigate } from 'react-router';
+const Storymodel = ({setShowModal,fetchStories,setStories}) => {
  const [mode, setMode] = useState("text");
  const [text, setText] = useState("");
  const bgColors=["#4f46e5","#7c3aed","#db2777","#e11d48","#ca8a04","#0d9488"]
  const [background, setBackground] = useState(bgColors[0])
  const [media, setMedia] = useState(null)
  const [previewUrl, setPreviewUrl] = useState(null)
+ const navigate=useNavigate()
  const handleUploadImage=(e)=>{
+   const MAX_VIDEO_DURATION=60;
+ const MAX_VIDEO_SIZE=50*1024*1024;
   const file=e.target.files?.[0];
- if(file)
- {
-  setMedia(file);
-  setPreviewUrl(URL.createObjectURL(file));
+  ///target you have a file tyo image ho ki vdo thaxaina,
+  //maxvideo duration ra max video size lai pani mantain garu xa
+if(file)
+{
+
+
+  if(file.type.startsWith('video'))
+  {
+  if(file.size>MAX_VIDEO_SIZE)
+  {
+    toast.error('File size exceed the limit.You can upload upto 50MB.');
+    setPreviewUrl(null)
+    setMedia(null)
+    return
+  }
+  else{
+    const video=document.createElement('video');
+    video.preload='metadata';
+    video.onloadedmetadata=()=>{
+      window.URL.revokeObjectURL(video.src)
+      if(video.duration>MAX_VIDEO_DURATION)
+      {
+         toast.error('File duration exceed the limit.You can upload video upto 60s.');
+    setPreviewUrl(null)
+    setMedia(null)
+    return
+      }
+      else{
+        setPreviewUrl(URL.createObjectURL(file))
+        setMedia(file)
+
+      }
+    }
+    video.src=URL.createObjectURL(file)
+  }
+  }
+  else{
+   setPreviewUrl(URL.createObjectURL(file))
+   setMedia(file)
+  }
+
+}
+else{
+  toast.error('Select proper file.')
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+//  if(file)
+//  {
+//    if(file)
+//  {
+//   if(file.type.startsWith('video'))
+//   {
+//     if(file.size>MAX_VIDEO_SIZE*1024*1024)
+//     {
+//       toast.error(`Video file cannot exceed ${MAX_VIDEO_SIZE} MB.`)
+//       setMedia(null)
+//       setPreviewUrl(null)
+//       return
+//     }
+//     const video=document.createElement("video");
+//     video.preload='metadata';
+//     video.onloadedmetadata=()=>{
+//       window.URL.revokeObjectURL(video.src)
+//       if(video.duration>MAX_VIDEO_DURATION)
+//       {
+//         toast.error("Video duration cannot exceed 1 minutes.")
+//              setMedia(null)
+//       setPreviewUrl(null)
+//       return
+//       }
+//       else{
+//         setMedia(file);
+//         setPreviewUrl(URL.createObjectURL(file))
+//         setText('')
+//         setMode('media')
+//       }
+//     }
+//     video.src=URL.createObjectURL(file);
+
+//   }
+//   else if(file.type.startsWith('image'))
+//   {
+//     setMedia(file);
+//     setPreviewUrl(URL.createObjectURL(file))
+//     setText('')
+//     setMode('media')
+//   }
+
+//  }
+
+//  }
  }
- }
+ const {getToken}=useAuth();
+
  const handleStoryAdd=async()=>{
 
+  const token=await getToken();
+
+ 
+  
+//media_type,content,background_colo
+  try
+  {
+ let media_type="text";
+ if(media)
+ {
+  if(media.type.startsWith('image/'))
+  {
+  media_type="image"
+  }
+  else{
+    media_type="video"
+  }
  }
- const notify=()=>{
-  toast("Sucessfully added story")
+ if(!text && !media)
+ {
+  toast.error('Nothing to add story!');
+  return
  }
+
+    const storyData=new FormData();
+    storyData.append('content',text);
+    storyData.append('background_color',background);
+    storyData.append('story',media)
+    storyData.append('media_type',media_type)
+   const {data}=await api.post('/api/story/add',storyData,{
+    headers:{
+      Authorization:`Bearer ${token}`
+    }
+   })
+   if(data.success)
+   {
+    toast.success(data.message)
+       setShowModal(false)
+    setStories((prev)=>{
+      return [data.story,...prev]
+    });
+
+  
+    
+   }
+   else{
+    toast.error(data.message)
+   }
+  }
+  catch(err)
+  {
+    toast.error(err.message)
+  }
+  
+
+ }
+
   return (
     <div className='h-screen inset-0 p-2 z-110 fixed  bg-black/80 backdrop-blur flex justify-center items-center'>
    
@@ -45,11 +202,11 @@ const Storymodel = ({setShowModal,fetchStories}) => {
       
      }
      {
-      mode==="media" &&  previewUrl &&( media?.type.startsWith('image') ?(
+      mode==="media" &&  previewUrl &&( media?.type.startsWith('image/') ?(
         <img className='object-contain max-h-full' src={previewUrl} alt="" />
       ):
       (
-        <video className='object-contain max-h-full' src={previewUrl}/>)
+        <video controls autoPlay className='object-contain max-h-full' src={previewUrl}/>)
       )
      }
 
@@ -76,27 +233,23 @@ const Storymodel = ({setShowModal,fetchStories}) => {
       </button>
 
       <label onClick={()=>{
-        setMode("media")
        
+       setMode('media')
       }} className={` ${mode=="media"?"bg-gray-200 transition-all duration-200  text-slate-900":"bg-slate-900 text-gray-200"} py-2 rounded-lg justify-center cursor-pointer items-center flex gap-4`}>
         <input onInput={(e)=>{
           handleUploadImage(e)
-        }} accept='image/*,videos/*' className='hidden' type="file" name="" id="" />
+        }} accept='image/*,video/*' className='hidden' type="file" name="" id="" />
         <Upload/>
-        Photos/Videos
+       Add Photos/Videos
       </label>
      </div>
 <div className='flex justify-center items-center mt-5 '>
 
-  <button onClick={()=>{
-  toast.promise(  handleStoryAdd(),{
-      loading:"Adding..",
-      success:<p>Story added sucessfully</p>,
-      error:(e)=><p>{e.message}  </p>
-
-
-    }
-  )}} className='flex bg-indigo-600 w-full justify-center items-center text-white rounded-lg py-2 cursor-pointer gap-2'>
+  <button   onClick={(e)=>{
+     toast.promise(handleStoryAdd(e),{
+      loading:"Adding story.."
+     })
+        }} className='flex bg-indigo-600 w-full justify-center items-center text-white rounded-lg py-2 cursor-pointer gap-2'>
 <StarsIcon/>
     Create Story
     </button>

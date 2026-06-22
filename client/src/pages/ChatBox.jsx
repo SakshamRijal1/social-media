@@ -20,7 +20,7 @@ const chatBox = useRef(null)
 
 setUser(dummyUserData);
 setLoad(false);
-console.log(window.scrollX)
+
 
   },[])
   if(load)

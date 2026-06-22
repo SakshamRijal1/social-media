@@ -5,36 +5,48 @@ import Loading from './Loading';
 import { ArrowLeft, ArrowRight, BadgeCheck, Cross, Dot, X } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { getToken, useAuth } from '@clerk/react';
+import api from '../api/axois';
+import toast from 'react-hot-toast';
 const Seepost = () => {
   dayjs.extend(relativeTime)
   const [post, setPost] = useState(null);
   const [load, setLoad] = useState(true);
   const [curr, setCurr] = useState(0)
   const {id}=useParams();
-  const location=useLocation();
-const state=location.state;
 
+const {getToken}=useAuth();
+    
+const fetchPost=async(id)=>{
+const token=await getToken();
+try{
+const {data}=await api.post('/api/post/onepost',{
+  id
+},
+{
+headers:{
+  Authorization:`Bearer ${token}`
+}})
 
+if(data.success)
+{
 
-
-  useEffect(()=>{
-    for(const val of dummyPostsData)
-    {
-      if(id===val._id)
-      {
-setPost(val);
-console.log(val)
-
+  setPost(data.post)
+}
+else {
+  toast.error(data.message)
+}
+}
+catch(err)
+{
+  toast.error(err.message)
+}
 setLoad(false)
-return;
-      }
-    }
-    
+}
 
-  
-    
-
-  },[])
+ useEffect(()=>{
+fetchPost(id)
+ },[id])
  
 const navigate=useNavigate()
 
@@ -86,7 +98,7 @@ navigate(-1);
 
     <div className='flex w-full gap-4 mt-4'>
   
-      <img className='w-13  rounded-full object-cover relative bottom-5 h-13' src={post.user.cover_photo} alt="cover-photo" />
+      <img className='w-13  rounded-full object-cover relative bottom-5 h-13' src={post.user.profile_picture} alt="cover-photo" />
       <div className='flex  relative flex-col bottom-5'>
     <h1 className='font-semibold flex gap-1'>{post.user.full_name}{post.user.is_verified && <BadgeCheck className='fill-blue-600 text-white'/>}</h1>
       <p className='text-gray-700 text-sm font-light flex gap-0.5'>@{post.user.username} <Dot/> {dayjs(post.createdAt).fromNow()} </p>

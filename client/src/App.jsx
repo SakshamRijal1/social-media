@@ -15,19 +15,26 @@ import Profile from "./pages/Profile"
 import Loading from "./components/Loading"
 import {Toaster} from 'react-hot-toast'
 import Seepost from "./components/Seepost"
+import { useDispatch } from "react-redux"
+import { fetchUser } from "./features/user/userSlice.js"
 
 function App() {
 const {user,isLoaded}=useUser();
 const {getToken}=useAuth();
+const dispatch=useDispatch()
 useEffect(()=>{
-
-  if(user)
+const fetchData=async()=>{
+if(user)
   {
-    getToken().then((token)=>{
-   console.log(token)
-    })
+    const token=await getToken();
+    dispatch(fetchUser(token))
+    
   }
-},[user,getToken])
+
+}
+  fetchData();
+  
+},[user,getToken,dispatch])
 if(!isLoaded)
 {
   return <Loading/>
@@ -64,7 +71,7 @@ index:true,
   element:<Discover/>
 },
 {
-  path:"profile/:profileId",
+  path:"profile/:id",
   element:<Profile/>
 }
 ,

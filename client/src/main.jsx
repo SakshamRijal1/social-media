@@ -5,13 +5,16 @@ import App from './App.jsx'
 
 import { ClerkProvider } from '@clerk/react'
 import { useUser } from '@clerk/react'
+import {Provider} from 'react-redux'
+import { store } from './app/store.js'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
  <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
-
+<Provider store={store}>
     
           <App />
+          </Provider>
      
 
          </ClerkProvider>

@@ -1,27 +1,84 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { dummyUserData } from '../assets/assets'
 import { BadgeCheck, Captions, Image, X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useSelector } from 'react-redux'
+import api from '../api/axois'
+import { getToken, useAuth } from '@clerk/react'
+import { useNavigate } from 'react-router'
 const CreatePost = () => {
-  const [user, setuser] = useState("")
-const [load, setLoad] = useState(true);
+
+const [load, setLoad] = useState(false);
 const [captionWithHastag, setCaptionWithHastag] = useState("");
+const caption=useRef('')
 const [url, setUrl] = useState([])
-  useEffect(()=>{
-setuser(dummyUserData);
-setLoad(false);
-
-  },[])
+const {getToken}=useAuth()
+const [image, setImage] = useState([])
+const user=useSelector((state)=>state.user.value)
+const navigate=useNavigate()
 const handlePost=async()=>{
+  const token=await getToken()
+  let content=""
+  let post_type=""
+ try{
 
-return new Promise((resolve)=>{
+
+  if(caption.current.value)
+  {
+    content=caption.current.value;
+  }
+  if(url.length==0 && !content)
+  {
+   return toast.error("Cannot add empty post.")
+  }
+  if(content && url.length>0)
+  {
+    post_type="text_with_image"
+  }
+  else if(content && url.length==0)
+    
+  {
   
-  setTimeout(()=>{
-    resolve()
-    },5000)
-})
+    post_type="text"
+  }
+  else{
+    post_type="image"
+  }
+
+
+  const post=new FormData()
+ post.append('content',content)
+ post.append('post_type',post_type)
+
+ for(const val of image)
+ {
+  post.append('images',val)
+ }
+
+ const {data}=await api.post('/api/post/add',post,
+  {
+    headers:{
+      Authorization:`Bearer ${token}`
+    }
+  }
+ )
+ if(data.success)
+ {
+  toast.success(data.message);
+  navigate('/')
+  
+ }
+ else{
+  toast.error(data.message)
+ }
+  
 
 }
+catch(err)
+{
+  toast.error(err.message)
+}
+}
+
   return (
 
 
@@ -48,7 +105,7 @@ return new Promise((resolve)=>{
 }
 <div className='  mb-10 '>
 
-<textarea onInput={(e)=>{
+<textarea ref={caption} onInput={(e)=>{
 setCaptionWithHastag(e.target.value.replace(/(#\w+)/g,`<span class="text-indigo-600">$1</span>`))
 }}  placeholder='What happening?' className='resize-none w-full mt-3 p-2  outline-gray-300 rounded-lg ' />
 {
@@ -71,6 +128,7 @@ url.length==1 &&
     <img className='w-full h-full object-cover ' src={url} alt="" />
     <X onClick={()=>{
   setUrl([])
+  setImage([])
 }} className='absolute top-0 right-0 cursor-pointer     shadow w-8 h-8 flex items-center bg-white text-gray-700 active:scale-95 transition-all duration-200'/>
 </div>
     
@@ -84,6 +142,9 @@ url.length==1 &&
             <X onClick={()=>{
 
 setUrl(url.filter(link=>link!==item))
+
+
+setImage(image.filter((_,i)=>i!==index))
 
 }} 
  className='absolute top-0 right-0 cursor-pointer    shadow w-8 h-8 flex items-center bg-white text-gray-700 active:scale-95 transition-all duration-200'/>
@@ -112,18 +173,14 @@ setUrl(url.filter(link=>link!==item))
                   const link=e.target.files?.[0];
   if(!link) return;
                setUrl((items=>[...items,URL.createObjectURL(link)]))
+               setImage(images=>[...images,link])
                 
         }}  accept='image/*,videos/*' className='hidden ' type="file" name="" id="" />
 <Image  className='cursor-pointer hover:scale-95 transition-all duration-200 shadow'/>
       </label>
    <div  class="flex flex-col gap-6 max-md:w-full  relative z-10">
   <button onClick={()=>{
-    toast.promise(handlePost(), {
-      loading:"Posting",
-      success:"Post added successfully",
-      error:"Error uploading post"
-
-    })
+    handlePost()
   }}
     class="group relative px-5  py-3 text-white rounded-md flex justify-center items-center backdrop-blur-xl border-2   bg-linear-to-r from-purple-500 to-pink-500 shadow-2xl   hover:scale-[1.02] hover:-translate-y-1 active:scale-95 transition-all duration-500 ease-out cursor-pointer  hover:bg-linear-to-r hover:from-pink-500 hover:to-purple-500 overflow-hidden">
     <div class="absolute  inset-0 bg-gradient-to-r from-transparent via-white  to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"

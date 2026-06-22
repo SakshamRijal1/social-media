@@ -5,6 +5,9 @@ import { ArrowLeft, ArrowRight, CirclePlusIcon, Plus } from 'lucide-react'
 import dayjs from 'dayjs'
 import Storymodel from './Storymodel'
 import Viewstory from './Viewstory'
+import { useAuth } from '@clerk/react'
+import api from '../api/axois'
+import toast from 'react-hot-toast'
 
 const Stories = () => {
 const [stories, setStories] = useState([])
@@ -13,9 +16,44 @@ const [showStories, setShowStories] = useState(null)
 const [load, setLoad] = useState(true);
 const story=useRef(null)
 const [scrollX, setScrollX] = useState(0)
+const {getToken}= useAuth();
+const handleView=async(item)=>{
+  console.log('viewd')
+const token=await getToken()
+
+const {data}=await api.post('/api/story/see',{
+  storyId:item._id
+}, 
+{
+  headers:{
+    Authorization:`Bearer ${token}`
+  }
+}
+
+
+
+
+
+)
+
+}
+
 const addStory=async ()=>{
-  setStories(dummyStoriesData);
- 
+const token=await getToken()
+
+
+const {data}=await api.get('/api/story/feed',{
+  headers:{
+    Authorization:`Bearer ${token}`
+  }
+})
+ if(data.success)
+ {
+  setStories(data.stories)
+ }
+ else{
+  toast.error(data.message)
+ }
   
   setLoad(false);
 
@@ -66,9 +104,15 @@ useEffect(() => {
           
           <div onClick={()=>{
             setShowStories(item)
+            handleView(item)
           }} key={index} className='min-w-35 max-w-35 rounded-lg hover:shadow  shadow-gray-400 transition-all duration-150 hover:scale-101 cursor-pointer justify-center items-center  h-45  m-5 relative flex'>
-<img className='rounded-full h-10 absolute top-3 left-3  z-20 w-10 ' src={item.user.profile_picture}alt="" />
-<p className='absolute z-20 bottom-3 right-3 font-extralight text-white '>3 hours ago</p>
+<img className='rounded-full h-10 absolute top-3 left-3  z-20 w-10 object-cover' src={item.user.profile_picture}alt="" />
+<div>
+<p className='absolute z-20 bottom-3 right-2 font-extralight text-white '>{ dayjs(item.createdAt).fromNow()
+}</p>
+
+</div>
+
 {
   item.media_type=="image" &&
   <img className='object-cover rounded-lg w-full h-full' src={item.media_url}/>}
@@ -89,7 +133,7 @@ useEffect(() => {
       }
 
 {
-  showModel && <Storymodel setShowModal={setShowModel}  fetchStories={addStory}></Storymodel>
+  showModel && <Storymodel setShowModal={setShowModel} setStories={setStories}   fetchStories={addStory}></Storymodel>
   
 }
 {

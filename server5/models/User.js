@@ -13,6 +13,10 @@ username:{
   type:String,
   unique:true,
 },
+is_verified:{
+type:Boolean,
+default:false
+},
 bio:{
   type:String,
   default:"I am using SakshaMedia"

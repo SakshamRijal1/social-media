@@ -3,20 +3,24 @@ import { assets, dummyUserData } from '../assets/assets'
 import { useNavigate } from 'react-router'
 import Menu from './Menu'
 import { CirclePlus, DoorClosed, LogOut, MoveLeftIcon } from 'lucide-react'
-import { useClerk, UserButton, useUser } from '@clerk/react'
+import { useClerk, UserButton, useSessionList, useUser } from '@clerk/react'
+import { useSelector } from 'react-redux'
 
 const Sidebar = ({sidebarOpen,setSidebarOpen}) => {
-
-const user=dummyUserData;
+const user=useSelector((state)=>state.user.value)
 const {signOut}=useClerk()
 
   const navigate=useNavigate()
   return (
     <div className={`w-60 xl:w-72 bg-white border-r border-gray-200 flex flex-col justify-between items-center max-sm:absolute relative inset-0 z-100 ${sidebarOpen?'translate-x-0':'max-sm:-translate-x-full'} transition-all  ease-in-out duration-300`}>
       <div className='w-full  flex flex-col'>
-        <img onClick={()=>{
+     
+            <h1 onClick={()=>{
           navigate('/')
-        }} className='w-26 ml-7 my-2 cursor-pointer' src={assets.logo} alt="" />
+        }} className="text-3xl text-center my-2 font-bold text-indigo-600 mb-4">
+            SakshaMedia
+          </h1>
+
         <hr className='border-gray-300 mb-8'/>
  <Menu setSideBarOpen={setSidebarOpen}/>
 <div onClick={()=>{
@@ -35,8 +39,8 @@ Create Post
       </div>
        
   
-      <div className=' text-gray-800 mb-10 w-full flex items-center justify-around border-t border-t-gray-200'>
-<div className='flex gap-2 items-center cursor-pointer'>
+      <div className=' text-gray-800 mb-5 w-full flex  justify-around border-t border-t-gray-200 items-center   '>
+<div className='flex mt-5 gap-2  items-center cursor-pointer  justify-center'>
   <UserButton/>
   <div>
     <h1 className='text-sm font-medium'>{user.full_name}</h1>
@@ -46,7 +50,7 @@ Create Post
 </div>
        
 
-   <LogOut onClick={signOut} className='w-4.5 text-gray-400 hover:text-gray-700 transition-all cursor-pointer'/>
+   <LogOut  onClick={signOut} className='size-6  text-gray-400 mt-5 hover:text-gray-700 transition-all cursor-pointer'/>
        </div>
     </div>
   )

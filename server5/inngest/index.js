@@ -1,8 +1,10 @@
-import {Inngest} from "inngest";
+import {cron, Inngest, step} from "inngest";
 import User from "../models/User.js";
 import mongoose from "mongoose";
 import Connection from "../models/Connection.js";
 import sendEmail from "../config/nodemailer.js";
+import Story from "../models/Story.js";
+import Message from "../models/Message.js";
 export const inngest=new Inngest({
   id:"Sakshamedia"
 })
@@ -306,5 +308,107 @@ return {
 
 //   })
 // })
+ 
+//innngest function to delete story after 24 hours
+const deleteStory=inngest.createFunction({
+  id:"story-delete",
+  triggers:[
+    {
+      event:'app/story.delete'
+    }
+  ]
+},async({event,step})=>{
+  const {storyId}=event.data;
+  const in24Hours=new Date(Date.now()+24*60*60*1000);
+  await step.sleepUntil('wait-for-24hours',in24Hours)
+  await step.run('user-story-delete',async()=>{
+    const story=await Story.findById(storyId);
+    if(!story) {
+      return {message:"Already deleted"}
+    }
 
-export const functions=[syncUserCreation,syncUserUpdation,syncUserDeletion,sendNewConnectionRequestReminder]
+    await Story.deleteOne({
+      _id:storyId
+    })
+return {
+  message:"Story deleted successfully"
+}
+  })
+})
+
+
+
+
+
+
+const sendNotificationOnUnseenMessages=inngest.createFunction({
+  id:'send-unseen-message',
+  triggers:[
+    {cron:'TZ=America/New_York 0 9 * * *'}
+  ]
+},async({step})=>{
+  const unseenMessages={};
+  const messages=await Message.find({seen:false}).populate('to_user_id from_user_id')
+  messages.forEach((message)=>
+  {
+    
+
+
+  unseenMessages[message.to_user_id._id]=(unseenMessages[message.to_user_id._id]||0)+1;
+
+})
+await step.run('send-email-message-unread',async()=>{
+  for(const id in unseenMessages)
+  {
+    const user=await User.findById(id)
+    const subject=`📥 Hey ${user.full_name},You have ${unseenMessages[id]} unread message on SakshaMedia.`
+const body = `
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 10px;">
+
+      <h2 style="color: #333;">📥 Unread Messages Notification</h2>
+
+      <p>Hi <b>${user.full_name}</b>,</p>
+
+      <p>
+        You have <b>${count}</b> unread messages waiting for you on <b>SakshaMedia</b>.
+      </p>
+
+      <div style="text-align: center; margin: 20px 0;">
+        <a href=${process.env.FRONTEND_URL}
+           style="background-color: #4CAF50; color: white; padding: 12px 20px;
+                  text-decoration: none; border-radius: 5px; display: inline-block;">
+          Open App
+        </a>
+      </div>
+
+ 
+    </div>
+ <div style="background:#f1f1f1; padding:15px; text-align:center; font-size:12px; color:#666;">
+      SakshaMedia © All rights reserved
+    </div>
+
+  </body>
+</html>
+`;
+    await sendEmail({
+      to:user.email,
+      subject,
+      body
+
+    })
+  }
+  
+})
+return {
+  message:"Send email successfully"
+}
+
+
+})
+
+
+export const functions=[syncUserCreation,syncUserUpdation,syncUserDeletion,sendNewConnectionRequestReminder,deleteStory,sendNotificationOnUnseenMessages]

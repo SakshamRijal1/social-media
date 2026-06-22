@@ -1,13 +1,17 @@
 
 import User from "../models/User.js";
 import fs from 'fs';
-
+import {clerkClient} from '@clerk/express'
 
 import Connection from "../models/Connection.js";
 import client from "../config/imageKit.js"
+import { inngest } from "../inngest/index.js";
+import { connect } from "mongoose";
+import Post from "../models/Post.js";
+
 
 export const getUserData=async(req,res)=>{
-      console.log("hi")
+  
   try{
     const {userId}=  req.auth();
     const user=await User.findById(userId);
@@ -33,24 +37,73 @@ export const getUserData=async(req,res)=>{
   }
 }
 
+
+export const getUserProfile=async(req,res)=>{
+
+  try{
+const {userId}=req.auth();
+
+const {id}=req.body;
+
+if(userId)
+{
+  const profile=await User.findById(id);
+  const posts=await Post.find({
+    user:id,
+  }).populate('user likes_count').sort({createdAt:-1});
+  res.json({
+    success:true,
+    message:"Post fetched successfully",
+    profile,
+    posts
+  })
+}
+  }
+  catch(err)
+  {
+    console.log(err)
+    res.json({
+      success:false,
+      message:err.message
+    })
+  }
+}
+
 export const updateUserData=async(req,res)=>{
   try{
     const {userId}=  req.auth();
-    const {username,bio,location,full_name}=req.body;
+    let {username,bio,location,full_name}=req.body;
     const tempUser=await User.findById(userId);
-    if(!username &&(username==tempUser.username))
+    console.log(username)
+        const profile=req.files.profile && req.files.profile[0];
+   const cover=req.files.cover && req.files.cover[0];
+
+     const existingUser =await User.findOne({
+      username,
+     })
+
+    if(!username)
     {
-      return 
-    }
-    if(tempUser.username !==username)
-    {
-      const user=User.findOne({username});
-      if(user)
-      {
-        username=tempUser.username;
-        
-      }
-    }
+    return res.json({
+      success:false,
+    message: "Username cannot be empty."
+    })
+
+  }
+if(existingUser)
+{
+  if(existingUser.username!=tempUser.username)
+  {
+    return res.json({
+      success:false,
+    message: `Username ${username} is not available.`
+    })
+  }
+}
+ 
+
+  
+ 
 
   const updateData=
   {
@@ -59,55 +112,80 @@ export const updateUserData=async(req,res)=>{
     location,
     full_name
   };
-    const profile=req.files.profile && req.files.profile[0];
-   const cover=req.files.cover && req.files.cover[0];
+
    if(profile)
    {
-    const buffer=fs.readFileSync(profile.path);//fs is file system module in nodejs
+    const buffer=fs.createReadStream(profile.path);//fs is file system module in nodejs
     const response=await  client.files.upload({
       file:buffer,
-      fileName:profile.originalNmae,
+      fileName:profile.originalname,
 
     })
 
-    const url=imageKit.url({
-      path:response.filePath,
-      transformation:[
-        {
-          quatlity:"auto"},
-          {format:'webp'},
-          {
-            width:'512'
-          }
+  //   const url=client.helper.buildSrc({
+  // urlEndpoint:process.env.IMAGEKIT_URL_ENDPOINT,
+  //       src:response.filePath,
+  //     transformation:[
+  //       {
+  //         quatlity:"auto"},
+  //         {format:'webp'},
+  //         {
+  //           width:'512'
+  //         }
         
-      ]
-    })
-    updateData.profile_picture=url;
+  //     ]
+  //   })
+    updateData.profile_picture=response.url;
    }
       if(cover)
    {
-    const buffer=fs.readFileSync(cover.path);//fs is file system module in nodejs
+    const buffer=fs.createReadStream(cover.path);//fs is file system module in nodejs
     const response=await  client.files.upload({
       file:buffer,
-      fileName:cover.originalName,
+      fileName:cover.originalname,
 
     })
 
-    const url=client.helper.buildSrc({
-      path:response.filePath,
-      transformation:[
-        {
-          quality:"auto"},
-          {format:'webp'},
-          {
-            width:'512'
-          }
+  //   const url=client.helper.buildSrc({
+  // urlEndpoint:process.env.IMAGEKIT_URL_ENDPOINT,
+  //       src:response.filePath,
+  //     transformation:[
+  //       {
+  //         quality:"auto"},
+  //         {format:'webp'},
+  //         {
+  //           width:'512'
+  //         }
         
-      ]
-    })
-    updateData.cover_photo=url;
+  //     ]
+  //   })
+    updateData.cover_photo=response.url;
 
    }
+  const [firstName,...rest]=full_name.trim().split(' ');
+  const lastName=rest.join(" ")
+
+await clerkClient.users.updateUser(userId, {
+  firstName,
+  lastName,
+  username
+})
+
+// await clerkClient.users.updateUserProfileImage(
+//   userId,
+//   {
+//     file: await fetch(updateData.profile_picture).then(r => r.blob())
+//   }
+// )
+// await clerkClient.users.updateUserProfileImage(userId,
+//   {
+//     file:await fetch(updateData.profile_picture).then(r=>r.blob())
+//   }
+// )
+
+
+
+
    const user=await User.findByIdAndUpdate(userId,
     updateData,
     {
@@ -256,10 +334,22 @@ export const sendConnectionRequest=async(req,res)=>{
 
     if(!connection)
     {
-    await Connection.create({
+    const connection=await Connection.create({
       from_user_id:userId,
       to_user_id:id,
     })
+    await inngest.send({
+      name:"app/connection-request",
+      data:{
+      connectionId:connection._id
+      }
+    })
+     {
+      return res.json({
+        success:true,
+        message:"Send connection request successfully"
+      })
+    }
     }
     else if(connection && connection.status=="accepted")
     {

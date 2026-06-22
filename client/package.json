@@ -11,14 +11,23 @@
   },
   "dependencies": {
     "@clerk/react": "^6.4.5",
+    "@reduxjs/toolkit": "^2.12.0",
     "@tailwindcss/vite": "^4.2.4",
+    "animate.css": "^4.1.1",
+    "axios": "^1.18.0",
+    "axois": "^0.0.1-security",
     "dotenv": "^17.4.2",
+    "face-api.js": "^0.22.2",
+    "gsap": "^3.15.0",
     "lucide-react": "^1.14.0",
+    "ogl": "^1.0.11",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hot-toast": "^2.6.0",
+    "react-redux": "^9.3.0",
     "react-router": "^7.14.2",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.2.4",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

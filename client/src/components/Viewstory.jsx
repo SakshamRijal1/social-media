@@ -48,6 +48,9 @@ if(!data) return;
   return (
 
     <div style={{'background':`${data.background_color}`}} className={`h-screen min-h-screen  z-120 ${data.media_type!=="text"?"bg-black":""}  inset-0 fixed `}>
+
+
+
       {
         data.media_type!=="video" &&
       <div className='bg-gray-500  fixed top-0 left-0 w-full'>
@@ -57,8 +60,8 @@ if(!data) return;
 
       </div>
 }
-      <div className='absolute top-4 left-4 bg-slate-950 flex gap-4 w-70 p-4 rounded-lg'>
-        <img className='rounded-full w-10 h-10  ' src={data.user.profile_picture} alt="" />
+      <div  className={`absolute top-4 left-4 flex gap-4  p-4 rounded-lg bg-neutral-700`}>
+        <img className='rounded-full object-cover w-10 h-10  ' src={data.user.profile_picture} alt="" />
         <div>
           <div className='flex gap-3 items-center-safe '>
 
@@ -74,24 +77,24 @@ if(!data) return;
       
 </div>
 <div className=' right-4 top-4 gap-4 p-2 absolute'>
-<button  className=' bg-slate-950 cursor-pointer  shadow-xs shadow-white p-2 rounded-lg' onClick={()=>{
+<button  className=' cursor-pointer  shadow-xs shadow-white bg-red-600 p-2 rounded-lg' onClick={()=>{
 handleClose()
       }} ><X className='text-white' /></button>
 
      </div>
 
-      <div className='w-full h-full text-center text-2xl flex  items-center justify-center sm:p-10'>
+      <div className='w-full h-full text-center text-2xl flex  max-md:object-contain items-center justify-center sm:p-10'>
       {
         data.media_type=="text" && <p className='w-9/12 m-auto text-white font-extralight text-wrap'>{data.content}</p>
       }
       {
-        data.media_type=="image" && <img className='object-cover h-full ' src={data.media_url} alt="" />
+        data.media_type=="image" && <img className='object-cover h-full max-md:object-contain ' src={data.media_url} alt="" />
       }
       {
         data.media_type=="video" && <video onEnded={()=>{
           setShowStories(null)
         }} 
-          controls autoPlay className='object-cover h-screen ' src={data.media_url}></video>
+          controls autoPlay className='object-cover h-screen max-md:object-contain ' src={data.media_url}></video>
       }
 
       </div>
